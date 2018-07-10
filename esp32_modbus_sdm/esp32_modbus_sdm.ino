@@ -25,34 +25,50 @@ void setup() {
   delay(100);
 }
 
+#define NUM_REGS  (10)
+
+uint16_t READ_ADDRESSES[] = {
+   SDM120C_VOLTAGE,
+   SDM120C_CURRENT,
+   SDM120C_POWER,
+   SDM120C_ACTIVE_APPARENT_POWER,
+   SDM120C_REACTIVE_APPARENT_POWER,
+   SDM120C_POWER_FACTOR,
+   SDM120C_FREQUENCY,
+   SDM120C_IMPORT_ACTIVE_ENERGY,
+   SDM120C_EXPORT_ACTIVE_ENERGY,
+   SDM120C_TOTAL_ACTIVE_ENERGY,
+};
+
+const char *REG_NAMES[] = {
+   "VOLTAGE [V]",
+   "CURRENT [A]",
+   "POWER   [W]",
+   "ACTIVE APPARENT POWER    [VA]",
+   "REACTIVE APPARENT POWER [VAR]",
+   "POWER FACTOR",
+   "FREQUENCY [Hz]",
+   "IMPORT ACTIVE ENERGY [kWh]",
+   "EXPORT ACTIVE ENERGY [kWh]",
+   "TOTAL ACTIVE ENERGY  [kWh]"  
+};
+
 void loop() {
-  float f = sdm.readVal( SDM120C_VOLTAGE );
-  if ( sdm.getErrCount(true) == 0) {
-     uint32_t x = (int)(100*f);  
-     Serial.printf( "Voltage:   %d.%02d V\n", x/100, x%100 );
-  } else {
-     Serial.printf( "error code: %d\n", sdm.getErrCode(true) );
+  float f;
+  Serial.println("-----------------------------------------------");
+  Serial.println("Reading Power Meter: EASTRON SDM120...");
+  for ( int i=0; i < NUM_REGS; i++ ) {
+    f = sdm.readVal( READ_ADDRESSES[i] );
+    if ( sdm.getErrCount(true) == 0 ) {
+       uint32_t x = (int)(1000*f);  
+       Serial.printf( "%s: %d.%03d\n", REG_NAMES[i], x/1000, x%1000 );
+    } else {
+       Serial.printf( "%s: ERROR (%d)\n", REG_NAMES[i], sdm.getErrCode(true) );
+    }
+    delay(5);
   }
-  delay(100);
-
-  f = sdm.readVal( SDM120C_CURRENT );
-  if ( sdm.getErrCount(true) == 0) {
-     uint32_t x = (int)(1000*f);  
-     Serial.printf( "Current:   %d.%03d A\n", x/1000, x%1000 );
-  } else {
-     Serial.printf( "error code: %d\n\n", sdm.getErrCode(true) );
-  }
-  delay(100);
-
-  f = sdm.readVal( SDM120C_FREQUENCY );
-  if ( sdm.getErrCount(true) == 0) {
-     uint32_t x = (int)(100*f);  
-     Serial.printf( "Frequency: %d.%02d Hz\n", x/100, x%100 );
-  } else {
-     Serial.printf( "error code: %d\n\n", sdm.getErrCode(true) );
-  }
-  delay(1000);
-
+  Serial.println("\n");
+  delay(5000);
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
