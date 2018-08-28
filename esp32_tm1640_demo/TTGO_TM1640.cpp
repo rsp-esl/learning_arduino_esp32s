@@ -1,8 +1,8 @@
 #include "TTGO_TM1640.h"
 
-#define DELAY()  delayMicroseconds(2);
+#define TM_DELAY()  delayMicroseconds(5)
 
-TTGO_TM1640::TTGO_TM1640( uint8_t _intensity, uint8_t _din_pin, uint8_t _sck_pin ) {
+TTGO_TM1640::TTGO_TM1640( uint8_t _din_pin, uint8_t _sck_pin, uint8_t _intensity ) {
 	 if (_intensity > 7) {
 	  	_intensity = 7;
 	 }
@@ -15,11 +15,10 @@ TTGO_TM1640::TTGO_TM1640( uint8_t _intensity, uint8_t _din_pin, uint8_t _sck_pin
 	 digitalWrite( sck_pin, HIGH );
 	 digitalWrite( din_pin, HIGH );
 
-   memset( buf, 0x00, 16 );
+   memset( buf, 0x00, TM1640_BUF_SIZE );
 
    writeByte( TM1640_CMD_DATA  ); // enter command data with auto address increment
    writeByte( TM1640_CMD_DISP | TM1640_DSP_ON | intensity ); // set brightness and turn display on
-   //clear();
 }
 
 void TTGO_TM1640::setBrightness( uint8_t level ) {
@@ -38,10 +37,10 @@ void TTGO_TM1640::writeByte( uint8_t data ) {
     
     for( uint8_t i=0; i<8; i++ ) {
         digitalWrite( sck_pin, LOW );
-        DELAY();
+        TM_DELAY();
         digitalWrite( din_pin, (data & 0x01)) ;
         digitalWrite( sck_pin, HIGH );
-        DELAY();
+        TM_DELAY();
         data = data >> 1;
     }  
       
@@ -50,6 +49,7 @@ void TTGO_TM1640::writeByte( uint8_t data ) {
     digitalWrite( din_pin, LOW );
     digitalWrite( sck_pin, HIGH );
     digitalWrite( din_pin, HIGH );
+    TM_DELAY();
 }
 
 void TTGO_TM1640::writeBytesToAddress( uint8_t addr, const uint8_t *data, uint8_t num_bytes ) {
@@ -60,7 +60,7 @@ void TTGO_TM1640::writeBytesToAddress( uint8_t addr, const uint8_t *data, uint8_
 
     addr = TM1640_CMD_ADDR | (addr & 0x0f);
     
-    // Write Address
+    // Write address byte
     for( uint8_t i=0; i<8; i++ ) {
         digitalWrite( sck_pin, LOW );
         digitalWrite( din_pin, (addr & 0x01) );
@@ -68,15 +68,15 @@ void TTGO_TM1640::writeBytesToAddress( uint8_t addr, const uint8_t *data, uint8_
         addr = addr >> 1;
     }
 
-    // Write data
-    for( uint8_t k=0; k < num_bytes; k++ ) {
-        uint8_t _data = data[num_bytes - k - 1];
+    // Write data byte(s)
+    for( uint8_t k=0, _data; k < num_bytes; k++ ) {
+        _data = data[num_bytes - k - 1];
         for( uint8_t i=0; i<8; i++ ) {
             digitalWrite( sck_pin, LOW );
-            DELAY();
+            TM_DELAY();
             digitalWrite( din_pin, (_data & 0x80) );
             digitalWrite( sck_pin, HIGH );
-            DELAY();
+            TM_DELAY();
             _data = _data << 1;
         }
     }
@@ -86,25 +86,37 @@ void TTGO_TM1640::writeBytesToAddress( uint8_t addr, const uint8_t *data, uint8_
     digitalWrite( din_pin, LOW );
     digitalWrite( sck_pin, HIGH );
     digitalWrite( din_pin, HIGH);
+    TM_DELAY();
 }
 
-void TTGO_TM1640::writeToDataBuffer( uint8_t index, uint8_t data ) {
-    if ( index < 16 ) {
+int TTGO_TM1640::writeToDataBuffer( uint8_t index, uint8_t data ) {
+    if ( index < TM1640_BUF_SIZE ) {
        buf[ index ] = data;
+       return 0;
     }
+    return -1;
 }
 
 void TTGO_TM1640::clearDataBuffer() {
-    memset( buf, 0x00, 16 );
+    memset( buf, 0x00, TM1640_BUF_SIZE );
 }
 
 void TTGO_TM1640::update() {
     writeBytesToAddress( 0, buf, 16 );   
 }
 
+void TTGO_TM1640::shiftDataBuffer() {
+    int last = (TM1640_BUF_SIZE-1);
+    uint8_t t = buf[0];
+    for ( int i=0; i < last; i++ ) {
+       buf[i] = buf[i+1];
+    }
+    buf[last] = t;
+}
+
 void TTGO_TM1640::clear() {
     clearDataBuffer();
-    memset( buf, 0x00, 16 );
+    memset( buf, 0x00, TM1640_BUF_SIZE );
     update();
 }
 
