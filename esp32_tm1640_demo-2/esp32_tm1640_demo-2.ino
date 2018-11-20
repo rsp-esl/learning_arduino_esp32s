@@ -2,7 +2,9 @@
 #include "TTGO_TM1640.h"
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ESP32 board, use GPIO-25 for DATA pin and GPIO-26 for SCK
+// ESP32 board
+// use GPIO-25 for DATA pin and GPIO-26 for SCK
+//  TM1640 16x8 LED matrix
 TTGO_TM1640 tm1640( 25 /*data*/, 26 /*clk*/, 7 /*brightness*/ );
     
 void setup() {

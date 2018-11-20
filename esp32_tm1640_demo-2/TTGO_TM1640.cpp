@@ -123,7 +123,7 @@ void TTGO_TM1640::writeXY( uint8_t x, uint8_t y, bool value ) {
     }
 }
 
-void TTGO_TM1640::shiftDataBuffer() {
+void TTGO_TM1640::shiftDataBuffer() { // shift-left
     int last = (TM1640_BUF_SIZE-1);
     uint8_t t = buf[0];
     for ( int i=0; i < last; i++ ) {
